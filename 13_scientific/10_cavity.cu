@@ -16,7 +16,7 @@ __global__ void init(float *u, float *v,float *p,float *b,float *un, float *vn, 
 
 	//int j=id/nx;
 	//int i=id%nx;
-
+     
 	u[id]=0;
 	v[id]=0;
 	p[id]=0;
@@ -35,11 +35,16 @@ __global__ void comB(float *u, float *v,float *b, int nx, int ny, double rho, do
 
 	if(j>=1&&j<ny-1&&i>=1&&i<nx-1)
 	{
+
 		b[j*nx+i]=rho * (1 / dt *
 					((u[j*nx+i + 1] - u[j*nx+i - 1]) / (2 * dx) + (v[(j + 1)*nx+i] - v[(j - 1)*nx+i]) / (2 * dy)) -
 					pow((u[j*nx+i + 1] - u[j*nx+i - 1]) / (2 * dx), 2) - 2 * ((u[(j + 1)*nx+i] - u[(j - 1)*nx+i]) / (2 * dy) *
 					(v[j*nx+i + 1] - v[j*nx+i - 1]) / (2 * dx)) - pow((v[(j + 1)*nx+i] - v[(j - 1)*nx+i]) / (2 * dy), 2));
+	
+	
+		//b[j*nx+i]=id;
 	}
+	
 
 }
 
@@ -60,7 +65,7 @@ __global__ void comP(float *p, float *pn, float *b, int nx, int ny, double dx, d
 
 }
 
-//可以并行吗？？ 有依赖性吗???????
+
 __global__ void boundryP(float *p, int ny, int nx)
 {
 
@@ -116,9 +121,9 @@ __global__ void comUV(float *u,float *v, float *un,float *vn, float *p, double d
 	{
 		u[id] = un[id] - un[id] * dt / dx * (un[id] - un[id - 1])
 					- un[id] * dt / dy * (un[id] - un[(j - 1)*nx+i])
-					- dt / (2 * rho * dx) * (p[(j + 1)*nx+i] - p[(j - 1)*nx+i])
+					- dt / (2 * rho * dx) * (p[(j + 1)*nx+i+1] - p[j*nx+i-1])
 					+ nu * dt / pow(dx, 2) * (un[id + 1] - 2 * un[id] + un[id - 1])
-					+ nu * dt / pow(dy, 2) * (un[(j + 1)+i] - 2 * un[id] + un[(j - 1)*nx+i]);
+					+ nu * dt / pow(dy, 2) * (un[(j + 1)*nx+i] - 2 * un[id] + un[(j - 1)*nx+i]);
 
 		
 		v[id] = vn[id] - vn[id] * dt / dx * (vn[id] - vn[id - 1])
@@ -154,8 +159,8 @@ __global__ void boundryUV(float *u, float *v, int nx, int ny)
 			v[(ny - 1)*nx+i] = 0;
 	}
 
-	u[id]=id;
-	v[id]=id;
+	//u[id]=id;
+	//v[id]=id;
 
 }
 
@@ -186,8 +191,9 @@ int main() {
 	ofstream ufile("u.dat");
 	ofstream vfile("v.dat");
 	ofstream pfile("p.dat");
-
-
+	
+	
+	
 	for (int n = 0; n < nt; n++) {
 		
 		comB<<<ny,nx>>>(u, v, b, nx, ny, rho, dx, dy, dt);
@@ -233,6 +239,7 @@ int main() {
 				for (int i = 0; i < nx; i++)
 					pfile << p[j*nx+i] << " ";
 			pfile << "\n";
+
 		}
 	}
 
@@ -241,4 +248,5 @@ int main() {
 	ufile.close();
 	vfile.close();
 	pfile.close();
+	
 }

@@ -1,9 +1,10 @@
-﻿#include "pch.h"
+
 #include <cstdlib>
 #include <cstdio>
 #include <fstream>
 #include <vector>
 #include <chrono>
+#include <math.h>
 
 using namespace std;
 typedef vector<vector<float>> matrix;
@@ -19,8 +20,7 @@ int main() {
 	double rho = 1.;
 	double nu = .02;
 
-	chrono::steady_clock::time_point tic, toc;
-	double time;
+	
 
 	matrix u(ny, vector<float>(nx));
 	matrix v(ny, vector<float>(nx));
@@ -37,13 +37,18 @@ int main() {
 			b[j][i] = 0;
 		}
 	}
+	//ofstream ufile("/mnt/d/learn python/u.dat");
+	//ofstream vfile("/mnt/d/learn python/v.dat");
+	//ofstream pfile("/mnt/d/learn python/p.dat");
+
 	ofstream ufile("u.dat");
 	ofstream vfile("v.dat");
 	ofstream pfile("p.dat");
+	
 
 
 	for (int n = 0; n < nt; n++) {
-		toc = chrono::steady_clock::now();
+		
 		for (int j = 1; j < ny - 1; j++) {
 			for (int i = 1; i < nx - 1; i++) {
 				b[j][i] = rho * (1 / dt *
@@ -52,9 +57,11 @@ int main() {
 					(v[j][i + 1] - v[j][i - 1]) / (2 * dx)) - pow((v[j + 1][i] - v[j - 1][i]) / (2 * dy), 2));
 			}
 		}
+		
+		
 		for (int it = 0; it < nit; it++) {
-			for (int j = 1; j < ny - 1; j++) {
-				for (int i = 1; i < nx - 1; i++) {
+			for (int j = 0; j < ny; j++) {
+				for (int i = 0; i < nx ; i++) {
 					pn[j][i] = p[j][i];
 				}
 			}
@@ -70,29 +77,28 @@ int main() {
 
 			for (int j = 0; j < ny; j++) {
 				p[j][nx - 1] = p[j][nx - 2];
-			}
-			for (int i = 0; i < nx; i++) {
-				p[0][i] = p[1][i];
-			}
-			for (int j = 0; j < ny; j++) {
 				p[j][0] = p[j][1];
 			}
 			for (int i = 0; i < nx; i++) {
+				p[0][i] = p[1][i];
 				p[ny - 1][i] = 0;
 			}
+			
 		}
-		for (int j = 1; j < ny - 1; j++) {
-			for (int i = 1; i < nx - 1; i++) {
+
+		
+		for (int j = 0; j < ny; j++) {
+			for (int i = 0; i < nx ; i++) {
 				un[j][i] = u[j][i];
 				vn[j][i] = v[j][i];
 			}
 		}
-
+		
 		for (int j = 1; j < ny - 1; j++) {
 			for (int i = 1; i < nx - 1; i++) {
 				u[j][i] = un[j][i] - un[j][i] * dt / dx * (un[j][i] - un[j][i - 1])
 					- un[j][i] * dt / dy * (un[j][i] - un[j - 1][i])
-					- dt / (2 * rho * dx) * (p[j][i + 1] - p[j][i - 1])
+					- dt / (2 * rho * dx) * (p[j+1][i + 1] - p[j][i - 1])
 					+ nu * dt / pow(dx, 2) * (un[j][i + 1] - 2 * un[j][i] + un[j][i - 1])
 					+ nu * dt / pow(dy, 2) * (un[j + 1][i] - 2 * un[j][i] + un[j - 1][i]);
 				v[j][i] = vn[j][i] - vn[j][i] * dt / dx * (vn[j][i] - vn[j][i - 1])
@@ -103,9 +109,8 @@ int main() {
 			}
 		}
 
-		tic = chrono::steady_clock::now();
-		time = chrono::duration<double>(tic - toc).count();
-		printf("step =%d : %lf s\n", n, time);
+		
+		printf("n =%d \n", n);
 
 		for (int j = 0; j < ny; j++) {
 			u[j][0] = 0;
@@ -133,6 +138,7 @@ int main() {
 				for (int i = 0; i < nx; i++)
 					pfile << p[j][i] << " ";
 			pfile << "\n";
+
 		}
 	}
 
@@ -141,4 +147,5 @@ int main() {
 	ufile.close();
 	vfile.close();
 	pfile.close();
+	
 }
